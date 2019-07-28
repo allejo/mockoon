@@ -10,7 +10,7 @@ import * as path from 'path';
 import { Errors } from 'src/app/enums/errors.enum';
 import { DummyJSONParser } from 'src/app/libs/dummy-helpers.lib';
 import { ExpressMiddlewares } from 'src/app/libs/express-middlewares.lib';
-import { Utils } from 'src/app/libs/utils.lib';
+import { GetRouteResponseContentType } from 'src/app/libs/utils.lib';
 import { DataService } from 'src/app/services/data.service';
 import { EventsService } from 'src/app/services/events.service';
 import { ToastsService } from 'src/app/services/toasts.service';
@@ -151,24 +151,27 @@ export class ServerService {
             const currentEnvironment = this.store.getEnvironmentByUUID(environment.uuid);
             const currentRoute = currentEnvironment.routes.find(route => route.uuid === declaredRoute.uuid);
 
+            // TODO make it dynamic depending on active response checkbox / or rules (depending on chosen implementation)
+            const enabledRouteResponse = currentRoute.responses[0];
+
             // add route latency if any
             setTimeout(() => {
-              const routeContentType = Utils.getRouteContentType(currentEnvironment, currentRoute);
+              const routeContentType = GetRouteResponseContentType(currentEnvironment, enabledRouteResponse);
 
               // set http code
-              res.status(currentRoute.statusCode);
+              res.status(enabledRouteResponse.statusCode);
 
               this.setHeaders(currentEnvironment.headers, req, res);
-              this.setHeaders(currentRoute.headers, req, res);
+              this.setHeaders(enabledRouteResponse.headers, req, res);
 
               // send the file
-              if (currentRoute.filePath) {
+              if (enabledRouteResponse.filePath) {
                 let filePath: string;
 
                 // throw error or serve file
                 try {
-                  filePath = DummyJSONParser(currentRoute.filePath, req);
-                  const fileMimeType = mimeTypes.lookup(currentRoute.filePath);
+                  filePath = DummyJSONParser(enabledRouteResponse.filePath, req);
+                  const fileMimeType = mimeTypes.lookup(enabledRouteResponse.filePath);
 
                   // if no route content type set to the one detected
                   if (!routeContentType) {
@@ -182,7 +185,7 @@ export class ServerService {
                     fileContent = DummyJSONParser(fileContent.toString('utf-8', 0, fileContent.length), req);
                   }
 
-                  if (!currentRoute.sendFileAsBody) {
+                  if (!enabledRouteResponse.sendFileAsBody) {
                     res.set('Content-Disposition', `attachment; filename="${path.basename(filePath)}"`);
                   }
                   res.send(fileContent);
@@ -198,7 +201,7 @@ export class ServerService {
                 // detect if content type is json in order to parse
                 if (routeContentType === 'application/json') {
                   try {
-                    res.json(JSON.parse(DummyJSONParser(currentRoute.body, req)));
+                    res.json(JSON.parse(DummyJSONParser(enabledRouteResponse.body, req)));
                   } catch (error) {
                     // if JSON parsing error send plain text error
                     if (error.message.indexOf('Unexpected token') > -1 || error.message.indexOf('Parse error') > -1) {
@@ -210,7 +213,7 @@ export class ServerService {
                   }
                 } else {
                   try {
-                    res.send(DummyJSONParser(currentRoute.body, req));
+                    res.send(DummyJSONParser(enabledRouteResponse.body, req));
                   } catch (error) {
                     // if invalid Content-Type provided
                     if (error.message.indexOf('invalid media type') > -1) {
@@ -220,7 +223,7 @@ export class ServerService {
                   }
                 }
               }
-            }, currentRoute.latency);
+            }, enabledRouteResponse.latency);
           });
         } catch (error) {
           // if invalid regex defined

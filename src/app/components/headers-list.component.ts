@@ -6,25 +6,21 @@ import { EnvironmentsService } from 'src/app/services/environments.service';
 import { EventsService } from 'src/app/services/events.service';
 import { ServerService } from 'src/app/services/server.service';
 import { EnvironmentType } from 'src/app/types/environment.type';
-import { headerNames, HeaderType, headerValues, RouteType } from 'src/app/types/route.type';
+import { headerNames, HeaderType, headerValues, RouteResponseType } from 'src/app/types/route.type';
 
-export type HeadersListType = 'routeHeaders' | 'environmentHeaders';
+export type HeadersListType = 'routeResponseHeaders' | 'environmentHeaders';
 
 @Component({
   selector: 'app-headers-list',
   templateUrl: 'headers-list.component.html'
 })
 export class HeadersListComponent implements OnInit {
-  @Input() data$: Observable<EnvironmentType | RouteType>;
+  @Input() data$: Observable<EnvironmentType | RouteResponseType>;
   @Input() type: HeadersListType;
   @Output() headerAdded: EventEmitter<any> = new EventEmitter();
   public form: FormGroup;
   public headersFormChanges: Subscription;
   public testHeaderValidity = this.serverService.testHeaderValidity;
-  public containersList = {
-    routeHeaders: '.route-headers',
-    environmentHeaders: '.environment-headers'
-  };
 
   constructor(
     private serverService: ServerService,
@@ -62,8 +58,8 @@ export class HeadersListComponent implements OnInit {
       ).subscribe(newProperty => {
         if (this.type === 'environmentHeaders') {
           this.environmentsService.updateActiveEnvironment(newProperty);
-        } else if (this.type === 'routeHeaders') {
-          this.environmentsService.updateActiveRoute(newProperty);
+        } else if (this.type === 'routeResponseHeaders') {
+          this.environmentsService.updateActiveRouteResponse(newProperty);
         }
       });
     });

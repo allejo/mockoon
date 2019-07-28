@@ -1,15 +1,16 @@
 import { Config } from 'src/app/config';
-import { Utils } from 'src/app/libs/utils.lib';
+import { ArrayContainsObjectKey, GetRouteResponseContentType } from 'src/app/libs/utils.lib';
 import { SettingsType } from 'src/app/services/settings.service';
 import { Toast } from 'src/app/services/toasts.service';
 import { DuplicatedRoutesTypes, EnvironmentsStatusType, StoreType } from 'src/app/stores/store';
 import { EnvironmentsType, EnvironmentType } from 'src/app/types/environment.type';
-import { RouteType } from 'src/app/types/route.type';
+import { RouteResponseType, RouteType } from 'src/app/types/route.type';
 import { EnvironmentLogsType } from 'src/app/types/server.type';
 
 export type ReducerDirectionType = 'next' | 'previous';
 export type ReducerActionType = {
   type: 'SET_ACTIVE_TAB' |
+  'SET_ACTIVE_VIEW' |
   'SET_INITIAL_ENVIRONMENTS' |
   'SET_ACTIVE_ENVIRONMENT' |
   'NAVIGATE_ENVIRONMENTS' |
@@ -24,6 +25,9 @@ export type ReducerActionType = {
   'ADD_ROUTE' |
   'REMOVE_ROUTE' |
   'UPDATE_ROUTE' |
+  'SET_ACTIVE_ROUTE_RESPONSE' |
+  'ADD_ROUTE_RESPONSE' |
+  'UPDATE_ROUTE_RESPONSE' |
   'LOG_REQUEST' |
   'CLEAR_LOGS' |
   'ADD_TOAST' |
@@ -46,6 +50,7 @@ export function environmentReducer(
   action: ReducerActionType
 ): StoreType {
   let newState: StoreType;
+  console.log(action.type)
 
   switch (action.type) {
 
@@ -58,6 +63,15 @@ export function environmentReducer(
       break;
     }
 
+    case 'SET_ACTIVE_VIEW': {
+      newState = {
+        ...state,
+        activeView: action.item,
+        environments: state.environments
+      };
+      break;
+    }
+
     case 'SET_INITIAL_ENVIRONMENTS': {
       const newEnvironments: EnvironmentsType = action.item;
 
@@ -65,6 +79,7 @@ export function environmentReducer(
         ...state,
         activeEnvironmentUUID: (newEnvironments.length) ? newEnvironments[0].uuid : null,
         activeRouteUUID: (newEnvironments.length && newEnvironments[0].routes.length) ? newEnvironments[0].routes[0].uuid : null,
+        activeRouteResponseUUID: (newEnvironments.length && newEnvironments[0].routes.length && newEnvironments[0].routes[0].responses.length) ? newEnvironments[0].routes[0].responses[0].uuid : null,
         environments: newEnvironments,
         environmentsStatus: newEnvironments.reduce<EnvironmentsStatusType>((environmentsStatus, environment) => {
           environmentsStatus[environment.uuid] = { running: false, needRestart: false };
@@ -86,7 +101,9 @@ export function environmentReducer(
           ...state,
           activeEnvironmentUUID: action.UUID ? action.UUID : activeEnvironment.uuid,
           activeRouteUUID: (activeEnvironment.routes.length) ? activeEnvironment.routes[0].uuid : null,
+          activeRouteResponseUUID: (activeEnvironment.routes.length && activeEnvironment.routes[0].responses.length) ? activeEnvironment.routes[0].responses[0].uuid : null,
           activeTab: 'RESPONSE',
+          activeView: 'ROUTE',
           environments: state.environments
         };
         break;
@@ -114,7 +131,9 @@ export function environmentReducer(
         ...state,
         activeEnvironmentUUID: newEnvironment.uuid,
         activeRouteUUID: (newEnvironment.routes.length) ? newEnvironment.routes[0].uuid : null,
+        activeRouteResponseUUID: (newEnvironment.routes.length && newEnvironment.routes[0].responses.length) ? newEnvironment.routes[0].responses[0].uuid : null,
         activeTab: 'RESPONSE',
+        activeView: 'ROUTE',
         environments: state.environments
       };
       break;
@@ -133,10 +152,15 @@ export function environmentReducer(
 
     case 'SET_ACTIVE_ROUTE': {
       if (action.UUID !== state.activeRouteUUID) {
+        const activeEnvironment = state.environments.find(environment => environment.uuid === state.activeEnvironmentUUID);
+        const activeRoute = activeEnvironment.routes.find(route => route.uuid === action.UUID);
+
         newState = {
           ...state,
           activeRouteUUID: action.UUID,
+          activeRouteResponseUUID: (activeRoute.responses.length) ? activeRoute.responses[0].uuid : null,
           activeTab: 'RESPONSE',
+          activeView: 'ROUTE',
           environments: state.environments
         };
         break;
@@ -164,7 +188,9 @@ export function environmentReducer(
       newState = {
         ...state,
         activeRouteUUID: newRoute.uuid,
+        activeRouteResponseUUID: (newRoute.responses.length) ? newRoute.responses[0].uuid : null,
         activeTab: 'RESPONSE',
+        activeView: 'ROUTE',
         environments: state.environments
       };
       break;
@@ -205,22 +231,26 @@ export function environmentReducer(
     }
 
     case 'ADD_ENVIRONMENT': {
+      const newEnvironment: EnvironmentType = action.item;
+
       newState = {
         ...state,
-        activeEnvironmentUUID: action.item.uuid,
-        activeRouteUUID: action.item.routes[0].uuid,
+        activeEnvironmentUUID: newEnvironment.uuid,
+        activeRouteUUID: newEnvironment.routes[0].uuid,
+        activeRouteResponseUUID: newEnvironment.routes[0].responses[0].uuid,
         activeTab: 'RESPONSE',
+        activeView: 'ROUTE',
         environments: [
           ...state.environments,
           action.item
         ],
         environmentsStatus: {
           ...state.environmentsStatus,
-          [action.item.uuid]: { running: false, needRestart: false }
+          [newEnvironment.uuid]: { running: false, needRestart: false }
         },
         environmentsLogs: {
           ...state.environmentsLogs,
-          [action.item.uuid]: []
+          [newEnvironment.uuid]: []
         }
       };
       break;
@@ -245,13 +275,15 @@ export function environmentReducer(
           newState = {
             ...newState,
             activeEnvironmentUUID: newEnvironments[0].uuid,
-            activeRouteUUID: (newEnvironments[0].routes.length) ? newEnvironments[0].routes[0].uuid : null
+            activeRouteUUID: (newEnvironments[0].routes.length) ? newEnvironments[0].routes[0].uuid : null,
+            activeRouteResponseUUID: (newEnvironments[0].routes.length && newEnvironments[0].routes[0].responses.length) ? newEnvironments[0].routes[0].responses[0].uuid : null
           };
         } else {
           newState = {
             ...newState,
             activeEnvironmentUUID: null,
-            activeRouteUUID: null
+            activeRouteUUID: null,
+            activeRouteResponseUUID: null
           };
         }
       }
@@ -266,7 +298,7 @@ export function environmentReducer(
       if (activeEnvironmentStatus.needRestart) {
         needRestart = true;
       } else {
-        needRestart = Utils.objectContainsOneArrayItem(action.properties, propertiesNeedingRestart) && activeEnvironmentStatus.running;
+        needRestart = ArrayContainsObjectKey(action.properties, propertiesNeedingRestart) && activeEnvironmentStatus.running;
       }
 
       newState = {
@@ -307,7 +339,7 @@ export function environmentReducer(
       const activeEnvironment = state.environments.find(environment => environment.uuid === state.activeEnvironmentUUID);
       const newRoutes = activeEnvironment.routes.filter(route => route.uuid !== action.UUID);
 
-      const newEnvironment = state.environments.map(environment => {
+      const newEnvironments = state.environments.map(environment => {
         if (environment.uuid === state.activeEnvironmentUUID) {
           return {
             ...environment,
@@ -322,20 +354,22 @@ export function environmentReducer(
           newState = {
             ...state,
             activeRouteUUID: newRoutes[0].uuid,
-            environments: newEnvironment
+            activeRouteResponseUUID: newRoutes[0].responses.length ? newRoutes[0].responses[0].uuid : null,
+            environments: newEnvironments
           };
         } else {
           newState = {
             ...state,
             activeRouteUUID: null,
-            activeTab: 'ENV_SETTINGS',
-            environments: newEnvironment
+            activeRouteResponseUUID: null,
+            activeView: 'ENV_SETTINGS',
+            environments: newEnvironments
           };
         }
       } else {
         newState = {
           ...state,
-          environments: newEnvironment
+          environments: newEnvironments
         };
       }
       break;
@@ -344,15 +378,19 @@ export function environmentReducer(
     case 'ADD_ROUTE': {
       // only add a route if there is at least one environment
       if (state.environments.length > 0) {
+        const newRoute: RouteType = action.item;
+
         newState = {
           ...state,
-          activeRouteUUID: action.item.uuid,
+          activeRouteUUID: newRoute.uuid,
+          activeRouteResponseUUID: newRoute.responses[0].uuid,
           activeTab: 'RESPONSE',
+          activeView: 'ROUTE',
           environments: state.environments.map(environment => {
             if (environment.uuid === state.activeEnvironmentUUID) {
               return {
                 ...environment,
-                routes: [...environment.routes, action.item]
+                routes: [...environment.routes, newRoute]
               };
             }
             return environment;
@@ -373,7 +411,7 @@ export function environmentReducer(
       if (activeEnvironmentStatus.needRestart) {
         needRestart = true;
       } else {
-        needRestart = Utils.objectContainsOneArrayItem(action.properties, propertiesNeedingRestart) && activeEnvironmentStatus.running;
+        needRestart = ArrayContainsObjectKey(action.properties, propertiesNeedingRestart) && activeEnvironmentStatus.running;
       }
 
       newState = {
@@ -399,6 +437,80 @@ export function environmentReducer(
           ...state.environmentsStatus,
           [state.activeEnvironmentUUID]: { ...activeEnvironmentStatus, needRestart }
         }
+      };
+      break;
+    }
+
+    case 'SET_ACTIVE_ROUTE_RESPONSE': {
+      if (action.UUID !== state.activeRouteResponseUUID) {
+        newState = {
+          ...state,
+          activeRouteResponseUUID: action.UUID
+        };
+        break;
+      }
+
+      newState = state;
+      break;
+    }
+
+    case 'ADD_ROUTE_RESPONSE': {
+      const newRouteResponse: RouteResponseType = action.item;
+
+      newState = {
+        ...state,
+        activeRouteResponseUUID: newRouteResponse.uuid,
+        activeTab: 'RESPONSE',
+        environments: state.environments.map(environment => {
+          if (environment.uuid === state.activeEnvironmentUUID) {
+            return {
+              ...environment,
+              routes: environment.routes.map(route => {
+                if (route.uuid === state.activeRouteUUID) {
+                  return {
+                    ...route,
+                    responses: [...route.responses, newRouteResponse]
+                  };
+                }
+
+                return route;
+              })
+            };
+          }
+          return environment;
+        })
+      };
+      break;
+    }
+
+    case 'UPDATE_ROUTE_RESPONSE': {
+      newState = {
+        ...state,
+        environments: state.environments.map(environment => {
+          if (environment.uuid === state.activeEnvironmentUUID) {
+            return {
+              ...environment,
+              routes: environment.routes.map(route => {
+                if (route.uuid === state.activeRouteUUID) {
+                  return {
+                    ...route,
+                    responses: route.responses.map(response => {
+                      if (response.uuid === state.activeRouteResponseUUID) {
+                        return {
+                          ...response,
+                          ...action.properties,
+                        };
+                      }
+                      return response;
+                    })
+                  };
+                }
+                return route;
+              })
+            };
+          }
+          return environment;
+        })
       };
       break;
     }
@@ -496,27 +608,28 @@ export function environmentReducer(
 }
 
 /**
- * Return the body editor "mode" from the currently selected env / route
+ * Return the body editor "mode" from the currently selected env / route response
  *
  * @param state
  */
 function getBodyEditorMode(state: StoreType) {
   const currentEnvironment = state.environments.find(environment => environment.uuid === state.activeEnvironmentUUID);
   const currentRoute = currentEnvironment && currentEnvironment.routes.find(route => route.uuid === state.activeRouteUUID);
+  const currentRouteResponse = currentEnvironment && currentRoute && currentRoute.responses.find(response => response.uuid === state.activeRouteResponseUUID);
 
-  if (!currentEnvironment || !currentRoute) {
+  if (!currentEnvironment || !currentRoute || !currentRouteResponse) {
     return 'text';
   }
 
-  const routeContentType = Utils.getRouteContentType(currentEnvironment, currentRoute);
+  const routeResponseContentType = GetRouteResponseContentType(currentEnvironment, currentRouteResponse);
 
-  if (routeContentType === 'application/json') {
+  if (routeResponseContentType === 'application/json') {
     return 'json';
-  } else if (routeContentType === 'text/html' || routeContentType === 'application/xhtml+xml') {
+  } else if (routeResponseContentType === 'text/html' || routeResponseContentType === 'application/xhtml+xml') {
     return 'html';
-  } else if (routeContentType === 'application/xml') {
+  } else if (routeResponseContentType === 'application/xml') {
     return 'xml';
-  } else if (routeContentType === 'text/css') {
+  } else if (routeResponseContentType === 'text/css') {
     return 'css';
   } else {
     return 'text';

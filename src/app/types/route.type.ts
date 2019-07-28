@@ -231,17 +231,22 @@ export const headerValues = [
   'UTF-16'
 ];
 
-export type RouteType = {
+export type RouteResponseType = {
   uuid: string;
-  documentation: string;
-  method: 'get' | 'post' | 'put' | 'patch' | 'delete' | 'head';
-  endpoint: string;
   statusCode: string;
   headers: HeaderType[];
   body?: string;
   latency: number;
   filePath: string;
   sendFileAsBody: boolean;
+};
+
+export type RouteType = {
+  uuid: string;
+  documentation: string;
+  method: 'get' | 'post' | 'put' | 'patch' | 'delete' | 'head';
+  endpoint: string;
+  responses: RouteResponseType[];
 };
 
 export type HeaderType = { key: string, value: string };

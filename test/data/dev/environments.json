@@ -10,52 +10,67 @@
         "uuid": "5904a6d0-f3d9-11e8-befa-911f4eb28c95",
         "method": "get",
         "endpoint": "*/:var/a(b)?c/[0-9]{1,5}",
-        "body": "{\"response\": \"{{urlParam 'var'}}\"}",
-        "latency": 0,
-        "statusCode": "200",
-        "headers": [
+        "documentation": "Test documentation",
+        "responses": [
           {
-            "key": "Content-Type",
-            "value": "application/json"
+            "uuid": "7369d664-f6d8-11a8-befa-91cf4eb2bc95",
+            "body": "{\"response\": \"{{urlParam 'var'}}\"}",
+            "latency": 0,
+            "statusCode": "200",
+            "headers": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "filePath": "",
+            "sendFileAsBody": false
           }
-        ],
-        "filePath": "",
-        "sendFileAsBody": false,
-        "documentation": "Test documentation"
+        ]
       },
       {
         "uuid": "7365d862-f3d8-11e8-befa-911f4eb28c95",
         "method": "get",
         "endpoint": "answer",
-        "body": "42",
-        "latency": 0,
-        "statusCode": "200",
-        "headers": [
+        "documentation": "",
+        "responses": [
           {
-            "key": "Content-Type",
-            "value": "text/plain"
+            "uuid": "7365d664-f6d8-11e8-befa-91cf4eb2bc95",
+            "body": "42",
+            "latency": 0,
+            "statusCode": "200",
+            "headers": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "filePath": "",
+            "sendFileAsBody": false
           }
-        ],
-        "filePath": "",
-        "sendFileAsBody": false,
-        "documentation": ""
+        ]
       },
       {
         "uuid": "7365d864-f3d8-11e8-befa-911f4eb28c95",
         "method": "post",
         "endpoint": "dolphins",
-        "body": "{\n    \"response\": \"So Long, and Thanks for All the Fish\"\n}",
-        "latency": 0,
-        "statusCode": "200",
-        "headers": [
+        "documentation": "",
+        "responses": [
           {
-            "key": "Content-Type",
-            "value": "application/json"
+            "uuid": "7365d664-f3d8-11e8-befa-911f4eb2bc95",
+            "body": "{\n    \"response\": \"So Long, and Thanks for All the Fish\"\n}",
+            "latency": 0,
+            "statusCode": "200",
+            "headers": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "filePath": "",
+            "sendFileAsBody": false
           }
-        ],
-        "filePath": "",
-        "sendFileAsBody": false,
-        "documentation": ""
+        ]
       }
     ],
     "proxyMode": false,

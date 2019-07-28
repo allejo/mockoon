@@ -3,7 +3,7 @@ import { CollectParams } from 'src/app/services/analytics.service';
 type AnalyticsEventsNames =
   'PAGEVIEW' | 'APPLICATION_START' | 'APPLICATION_FIRST_LOAD' | 'SERVER_STOP' | 'SERVER_RESTART' |
   'SERVER_START' | 'NAVIGATE_ENVIRONMENT' | 'NAVIGATE_ROUTE' |
-  'CREATE_ENVIRONMENT' | 'CREATE_ROUTE' | 'CREATE_HEADER' | 'DUPLICATE_ENVIRONMENT' |
+  'CREATE_ENVIRONMENT' | 'CREATE_ROUTE' | 'CREATE_ROUTE_RESPONSE' | 'CREATE_HEADER' | 'DUPLICATE_ENVIRONMENT' |
   'DUPLICATE_ROUTE' | 'DELETE_ENVIRONMENT' | 'DELETE_ROUTE' | 'DELETE_HEADER' |
   'LINK_ROUTE_IN_BROWSER' | 'LINK_FEEDBACK' | 'LINK_RELEASE' | 'LINK_WIKI' | 'LINK_APPLY_UPDATE' |
   'EXPORT_FILE' | 'EXPORT_CLIPBOARD' | 'IMPORT_FILE' | 'IMPORT_CLIPBOARD' | 'SERVER_ENTERING_REQUEST';
@@ -19,6 +19,7 @@ export const AnalyticsEvents: { [keyof in AnalyticsEventsNames]: CollectParams }
   NAVIGATE_ROUTE: { type: 'event', category: 'navigate', action: 'route' },
   CREATE_ENVIRONMENT: { type: 'event', category: 'create', action: 'environment' },
   CREATE_ROUTE: { type: 'event', category: 'create', action: 'route' },
+  CREATE_ROUTE_RESPONSE: { type: 'event', category: 'create', action: 'route-response' },
   CREATE_HEADER: { type: 'event', category: 'create', action: 'header' },
   DUPLICATE_ENVIRONMENT: { type: 'event', category: 'duplicate', action: 'environment' },
   DUPLICATE_ROUTE: { type: 'event', category: 'duplicate', action: 'route' },

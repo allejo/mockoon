@@ -85,7 +85,7 @@ export const Migrations: { id: number, migrationFunction: (environment: Environm
 
         // rename customHeaders to headers
         if (route['customHeaders']) {
-          route.headers = route['customHeaders'];
+          route['headers'] = route['customHeaders'];
           delete route['customHeaders'];
         }
       });
@@ -100,8 +100,8 @@ export const Migrations: { id: number, migrationFunction: (environment: Environm
 
       environment.routes.forEach((route: RouteType & { file: any }) => {
         // remove file object
-        route.filePath = (route.file) ? route.file.path : '';
-        route.sendFileAsBody = (route.file) ? route.file.sendAsBody : false;
+        route['filePath'] = (route.file) ? route.file.path : '';
+        route['sendFileAsBody'] = (route.file) ? route.file.sendAsBody : false;
         delete route.file;
 
         delete route['duplicates'];

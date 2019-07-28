@@ -15,12 +15,42 @@ import { ServerService } from 'src/app/services/server.service';
 import { SettingsService } from 'src/app/services/settings.service';
 import { ToastsService } from 'src/app/services/toasts.service';
 import { ReducerDirectionType } from 'src/app/stores/reducer';
-import { Store, TabsNameType } from 'src/app/stores/store';
+import { Store, TabsNameType, ViewsNameType } from 'src/app/stores/store';
 import { DataSubjectType, ExportType } from 'src/app/types/data.type';
 import { EnvironmentsType, EnvironmentType } from 'src/app/types/environment.type';
-import { CORSHeaders, HeaderType, RouteType } from 'src/app/types/route.type';
+import { CORSHeaders, HeaderType, RouteResponseType, RouteType } from 'src/app/types/route.type';
 import * as uuid from 'uuid/v1';
 const appVersion = require('../../../package.json').version;
+
+/**
+ * WIP
+ *
+ * MULTIPLE ROUTE RESPONSE
+ *
+ * TODO
+ * - change active tab level : 1st level = route / log / env settings, 2nd level = response X, 3rd level = response body / response headers
+ * --> ActiveView -> ActiveRoute (DONE) -> ActiveTab DONE
+ * - prevent scroll on full page (headers /body instead) DONE
+ * - set active route response method / reducer DONE
+ * - change types to reflect root route properties (path / method) and put responses in an array DONE
+ * - create new sample data WIP
+ * - display different responses in dropdown WIP --> design need improvement
+ * - update reducer to correctly reduce responses --> navigate, set active route, etc WIP TEST
+ * - test automatic tab / view switching when adding envs, routes, etc WIP TEST
+ * - decide implementation (checkbox vs rules)
+ * - split route things in more tabs: rules / status code / body + file / headers
+ * - add route response method / reducer DONE
+ * - delete route response method / reducer
+ * - create migration function
+ * - redo route data design
+ * - update tests
+ *
+ * BUGS
+ * - headers not scrolling when reaching bottom DONE
+ * - full page scrolling instead of tabs content DONE
+ *
+ */
+
 
 @Injectable()
 export class EnvironmentsService {
@@ -45,16 +75,22 @@ export class EnvironmentsService {
     documentation: '',
     method: 'get',
     endpoint: '',
+    responses: []
+  };
+
+  private routeResponseSchema: RouteResponseType = {
+    uuid: '',
     body: '{}',
     latency: 0,
     statusCode: '200',
-    headers: [],
+    headers: [
+      { key: '', value: '' }
+    ],
     filePath: '',
     sendFileAsBody: false
   };
 
   private emptyHeaderSchema: HeaderType = { key: '', value: '' };
-  private routeHeadersSchema: HeaderType = { key: '', value: '' };
   private storageKey = 'environments';
 
   constructor(
@@ -177,13 +213,29 @@ export class EnvironmentsService {
     const newRoute: RouteType = {
       ...this.routeSchema,
       uuid: uuid(),
-      headers: [
-        { ...this.routeHeadersSchema }
+      responses: [
+        {
+          ...this.routeResponseSchema,
+          uuid: uuid()
+        }
       ]
     };
 
     this.store.update({ type: 'ADD_ROUTE', item: newRoute });
     this.eventsService.analyticsEvents.next(AnalyticsEvents.CREATE_ROUTE);
+  }
+
+  /**
+   * Add a new route response and save it in the store
+   */
+  public addRouteResponse() {
+    const newRouteResponse: RouteResponseType = {
+      ...this.routeResponseSchema,
+      uuid: uuid()
+    };
+
+    this.store.update({ type: 'ADD_ROUTE_RESPONSE', item: newRouteResponse });
+    this.eventsService.analyticsEvents.next(AnalyticsEvents.CREATE_ROUTE_RESPONSE);
   }
 
   /**
@@ -224,6 +276,20 @@ export class EnvironmentsService {
   }
 
   /**
+   * Set active view
+   */
+  public setActiveView(activeView: ViewsNameType) {
+    this.store.update({ type: 'SET_ACTIVE_VIEW', item: activeView });
+  }
+
+  /**
+   * Set active view
+   */
+  public setActiveRouteResponse(routeResponseUUID: string) {
+    this.store.update({ type: 'SET_ACTIVE_ROUTE_RESPONSE', UUID: routeResponseUUID });
+  }
+
+  /**
    * Update the active environment
    */
   public updateActiveEnvironment(properties: { [T in keyof EnvironmentType]?: EnvironmentType[T] }) {
@@ -235,6 +301,13 @@ export class EnvironmentsService {
    */
   public updateActiveRoute(properties: { [T in keyof RouteType]?: RouteType[T] }) {
     this.store.update({ type: 'UPDATE_ROUTE', properties });
+  }
+
+  /**
+   * Update the active route response
+   */
+  public updateActiveRouteResponse(properties: { [T in keyof RouteResponseType]?: RouteResponseType[T] }) {
+    this.store.update({ type: 'UPDATE_ROUTE_RESPONSE', properties });
   }
 
   /**
@@ -272,8 +345,12 @@ export class EnvironmentsService {
       routes: [
         {
           ...this.routeSchema,
-          headers: [
-            { ...this.routeHeadersSchema }
+          uuid: uuid(),
+          responses: [
+            {
+              ...this.routeResponseSchema,
+              uuid: uuid()
+            }
           ]
         }
       ],
@@ -294,17 +371,35 @@ export class EnvironmentsService {
         {
           ...this.routeSchema,
           uuid: uuid(),
-          headers: [{ key: 'Content-Type', value: 'text/plain' }],
           endpoint: 'answer',
-          body: '42'
+          responses: [
+            {
+              uuid: uuid(),
+              statusCode: '200',
+              latency: 0,
+              filePath: '',
+              sendFileAsBody: false,
+              headers: [{ key: 'Content-Type', value: 'text/plain' }],
+              body: '42'
+            }
+          ]
         },
         {
           ...this.routeSchema,
           uuid: uuid(),
-          headers: [{ key: 'Content-Type', value: 'application/json' }],
           method: 'post',
           endpoint: 'dolphins',
-          body: '{\n    "response": "So Long, and Thanks for All the Fish"\n}'
+          responses: [
+            {
+              uuid: uuid(),
+              statusCode: '200',
+              latency: 0,
+              filePath: '',
+              sendFileAsBody: false,
+              headers: [{ key: 'Content-Type', value: 'application/json' }],
+              body: '{\n    "response": "So Long, and Thanks for All the Fish"\n}'
+            }
+          ]
         }
       ]
     };

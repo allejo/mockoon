@@ -96,9 +96,11 @@ label {
     }
   }
 }
+
 .btn {
   border-width: 0;
 }
+
 .btn.btn-icon {
   text-decoration: none;
 
@@ -120,6 +122,17 @@ label {
     color: $gray-200;
     box-shadow: inset 0 -2px 0 0 $blue;
     border-radius: 0;
+  }
+}
+
+.btn-custom {
+  border-width: $btn-border-width;
+  @include button-variant($custom-gray, $custom-gray, $custom-gray, $custom-gray, $custom-gray, $gray-800);
+
+  &:focus,
+  &.focus,
+  &:not(:disabled):not(.disabled):active:focus, &:not(:disabled):not(.disabled).active:focus, .show > &.dropdown-toggle:focus {
+    box-shadow: none;
   }
 }
 
@@ -228,8 +241,8 @@ html, body {
   height: 100vh;
 }
 
-select, input, .btn {
-  transition: all ease-in-out 200ms;
+select, input, .btn, .dropdown-item {
+  transition: all ease-in-out 100ms;
 }
 
 .main-content {
@@ -269,13 +282,9 @@ select, input, .btn {
   font-size: $small-font-size;
 }
 
-.tab-content, .scroll-content {
+.scroll-content {
   overflow-x: hidden;
   overflow-y: scroll;
-
-  &.no-scroll {
-    overflow-y: hidden;
-  }
 }
 
 .doc-link {

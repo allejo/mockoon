@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import * as crypto from 'crypto';
 import { Config } from 'src/app/config';
-import { Utils } from 'src/app/libs/utils.lib';
+import { AscSort } from 'src/app/libs/utils.lib';
 import { DataSubjectType, ExportType } from 'src/app/types/data.type';
 import { EnvironmentsType, EnvironmentType } from 'src/app/types/environment.type';
 import { RouteType } from 'src/app/types/route.type';
@@ -98,7 +98,7 @@ export class DataService {
     // get and sort headers
     requestLog.headers = Object.keys(request.headers).map((headerName) => {
       return { name: headerName, value: request.headers[headerName] };
-    }).sort(Utils.ascSort);
+    }).sort(AscSort);
 
     return requestLog;
   }
